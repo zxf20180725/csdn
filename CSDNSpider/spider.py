@@ -1,77 +1,109 @@
 """
-数据库设计：
-    用户表：
-        id:自增主键
-        username:用户名
-        
-    文章表：
-        id:自增主键
-        csdn_article_id:csdn中的文章id，
-        csdn_article_title:文章标题
-        user_id:外键，用户id
-        
-    数据表：
-        id:自增主键
-        article_id:外键，文章id
-        post_time:录入时间
-        num_comments:评论数
-        num_likes:点赞数
-    
 1.每小时执行一次
 2.读取后台添加的指定账号
 3.爬取每个账号的所有文章
-    1.如果这个账号的文章已经在数据库，那么插入一条最新数据，
-        如果不在，那么创建这个文章，并且插入一条数据
-
 """
+import time
+
+import pymysql
 from lxml import etree
 
 import requests
 
-
-# url = 'https://blog.csdn.net/qq_39687901/'
-#
-# response = requests.get(url)
-#
-# dom_tree = etree.HTML(response.text)
-#
-# print(dom_tree.xpath('//div[@class="article-list"]'))
+g_connect = None
+g_cursor = None
 
 
 def get_all_username():
     """
-    获取所有username
+    获取所有username和id
     """
-    pass
+    g_cursor = g_connect.cursor()
+    sql = "select id,username from csdn_user"
+    g_cursor.execute(sql)
+    rs = g_cursor.fetchall()
+    for row in rs:
+        yield row
+    g_cursor.close()
 
 
-def update_data(username):
+def insert_data(username, article):
+    g_cursor = g_connect.cursor()
+    # 插入数据
+    sql = "insert into data(username,post_time,num_comments,num_likes,csdn_article_id,csdn_article_name) values('%s',%s,%s,%s,%s,'%s')" % (
+        username, article['post_time'], article['num_comments'], article['num_likes'], article['csdn_article_id'],
+        article['csdn_article_name'])
+
+    print(sql)
+    g_cursor.execute(sql)
+    g_connect.commit()
+    g_cursor.close()
+
+
+def update_data(user_id, username):
     """
     更新数据
     """
-    url = 'https://blog.csdn.net/%s/article/list/{page}/' % username
+    base_url = 'https://blog.csdn.net/%s/article/list/{page}/' % username
     # 获取这个用户一共有多少页文章
     cur_page = 1
     while True:
-        url = url.replace('{page}', str(cur_page))
-        print(url)
+        # 请求html
+        url = base_url.replace('{page}', str(cur_page))
         html = requests.get(url).text
         dom_tree = etree.HTML(html)
-        # 如果第一个h6为None，那么说明这一页不存在
-        if dom_tree.xpath('//h6')[0].text == 'None':
-            break
-        print(cur_page)
+        # 有内容说明存在这一页
+        try:
+            if dom_tree.xpath('//h6')[0].text:
+                break
+        except:
+            pass
+
+        # 爬取数据
+        for article in dom_tree.xpath(
+                '//div[@class="article-list"]/div[@class="article-item-box csdn-tracking-statistics"]'):
+            # csdn中的文章id
+            csdn_article_id = article.xpath('./@data-articleid')[0]
+
+            # csdn文章标题
+            csdn_article_name = "".join(article.xpath('./h4/a/text()')).replace('\n', '').replace(' ', '')
+
+            # 阅读数
+            num_likes = \
+                article.xpath('./div[@class="info-box d-flex align-content-center"]/p[2]/span/text()')[0].split('：')[1]
+
+            # 评论数
+            num_comments = \
+                article.xpath('./div[@class="info-box d-flex align-content-center"]/p[3]/span/text()')[0].split('：')[1]
+
+            # 当前时间
+            post_time = int(time.time())
+
+            # 录入数据
+            dict_article = {
+                'csdn_article_id': csdn_article_id,
+                'csdn_article_name': csdn_article_name,
+                'num_likes': num_likes,
+                'num_comments': num_comments,
+                'post_time': post_time
+            }
+            insert_data(username, dict_article)
         cur_page += 1
-    # dom_tree.xpath('//h6')[0].text
-    # for li in list_li:
-    #     print(li)
-    #     max_page = int(li.xpath('./text()'))
-    # print(max_page)
 
 
 def main():
-    update_data('u012702547')
+    global g_connect, g_cursor
+    # 连接数据库
+    g_connect = pymysql.Connect(host='gz-cdb-8bjsdhgv.sql.tencentcdb.com',
+                                port=62263,
+                                user='root',
+                                passwd='Zxf_4342987',
+                                db='csdn',
+                                charset='utf8'
+                                )
 
+    for user in get_all_username():
+        update_data(*user)
+    # 关闭数据库
 
-if __name__ == '__main__':
-    main()
+    g_connect.close()
