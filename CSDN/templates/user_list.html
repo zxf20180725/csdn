@@ -22,7 +22,7 @@
                     {% for item in users%}
                     <tr>
                         <td>{{item.id}}</td>
-                        <td>{{item.username}}</td>
+                        <td><a href="/home/article_list/?username={{item.username}}">{{item.username}}</a></td>
                         <td>
                             <button type="button" class="btn btn-default btn-sm">
                                 <span class="glyphicon glyphicon-trash"></span>

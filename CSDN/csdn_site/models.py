@@ -13,7 +13,7 @@ class CsdnUser(models.Model):
 
 
 class Data(models.Model):
-    username = models.ForeignKey(CsdnUser, models.DO_NOTHING, db_column='username')
+    username = models.CharField(max_length=256,null=False,default="")
     post_time = models.BigIntegerField()
     num_comments = models.IntegerField()
     num_likes = models.IntegerField()
