@@ -20,7 +20,7 @@
             <tbody>
             {% for item in articles%}
             <tr>
-                <td><a href="/home/readnum_list/">{{item.csdn_article_name}}</a></td>
+                <td><a href="/home/readnum_list/?csdn_article_name={{item.csdn_article_name}}">{{item.csdn_article_name}}</a></td>
                 <td>
                     <button type="button" class="btn btn-default btn-sm">
                         <span class="glyphicon glyphicon-trash"></span>
