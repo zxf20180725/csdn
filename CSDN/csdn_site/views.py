@@ -26,7 +26,7 @@ def article_list(request):
 def readnum_list(request):
     csdn_article_name = request.GET.get('csdn_article_name')
     ret = Data.objects.filter(csdn_article_name=csdn_article_name).order_by('post_time')
-    ret = ret[len(ret) - 24:len(ret)]
+    ret = ret[len(ret) - 10:len(ret)]
     # ret = [i for i in ret]
     # # TODO:取反
     # ret = reversed(ret)

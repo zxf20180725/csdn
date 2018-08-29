@@ -34,7 +34,7 @@ def insert_data(username, article):
         username, article['post_time'], article['num_comments'], article['num_likes'], article['csdn_article_id'],
         article['csdn_article_name'])
 
-    print(sql)
+    # print(sql)
     g_cursor.execute(sql)
     g_connect.commit()
     g_cursor.close()
@@ -105,5 +105,4 @@ def main():
     for user in get_all_username():
         update_data(*user)
     # 关闭数据库
-
     g_connect.close()

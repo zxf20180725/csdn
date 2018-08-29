@@ -1,4 +1,5 @@
 import datetime
+import time
 from threading import Thread
 from time import sleep
 
@@ -53,8 +54,7 @@ class TaskTimer:
             except Exception as e:
                 self.write_log("异常", "周期任务：" + task['fun'].__name__ + " 函数内部异常：" + str(e))
 
-            task['next_sec'] = self.get_today_until_now() + task['interval']
-        pass
+            task['next_sec'] = (self.get_today_until_now() + task['interval']) % 86400
 
     def timing_task(self, task):
         """

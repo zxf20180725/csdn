@@ -15,7 +15,16 @@
 <!-- 包括所有已编译的插件 -->
 <script src="/static/js/echarts.simple.min.js"></script>
 <script>
-
+function timestampToTime(timestamp) {
+        var date = new Date(timestamp * 1000);//时间戳为10位需*1000，时间戳为13位的话不需乘1000
+        var Y = date.getFullYear() + '-';
+        var M = (date.getMonth()+1 < 10 ? '0'+(date.getMonth()+1) : date.getMonth()+1) + '-';
+        var D = date.getDate() + ' ';
+        var h = date.getHours() + ':';
+        var m = date.getMinutes() + ':';
+        var s = date.getSeconds();
+        return Y+M+D+h+m+s;
+}
         var dom = document.getElementById("container");
         var myChart = echarts.init(dom);
         var app = {};
@@ -23,7 +32,7 @@
         option = {
             xAxis: {
                 type: 'category',
-                data: [{%for item in ret%}{{item.post_time}},{%endfor%}]
+                data: [{%for item in ret%}timestampToTime({{item.post_time}}),{%endfor%}]
             },
             yAxis: {
                 type: 'value'
